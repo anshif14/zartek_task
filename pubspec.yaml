@@ -41,6 +41,8 @@ dependencies:
   http: ^1.2.2
   pinput: ^5.0.0
   google_sign_in: ^6.1.6
+  intl_phone_field: ^3.2.0
+  badges:
 
 dev_dependencies:
   flutter_test:

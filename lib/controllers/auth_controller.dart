@@ -23,7 +23,6 @@ class AuthController {
 
   Future<User?> signInWithGoogle() async {
     try {
-
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         return _auth.currentUser;
@@ -42,12 +41,49 @@ class AuthController {
     }
   }
 
+  Future<void> verifyPhone(
+    String phoneNumber, {
+    required void Function(String verificationId) onCodeSent,
+  }) async {
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await _auth.signInWithCredential(credential);
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          throw e;
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          onCodeSent(verificationId);
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {},
+      );
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  Future<User?> verifyOtp(String verificationId, String smsCode) async {
+    try {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: smsCode,
+      );
+
+      final userCredential = await _auth.signInWithCredential(credential);
+      return userCredential.user;
+    } catch (e) {
+      throw e;
+    }
+  }
+
   Future<void> signOut() async {
     try {
       await _auth.signOut();
       await _googleSignIn.signOut();
     } catch (e) {
-      rethrow;
+      throw e;
     }
   }
 }

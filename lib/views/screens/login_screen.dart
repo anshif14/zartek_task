@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../common/image_constants.dart';
 import '../../controllers/auth_controller.dart';
 import 'home_screen.dart';
+import 'phone_auth_screen.dart';
 
 double height = 0;
 double width = 0;
@@ -97,32 +98,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Center(
                 child: SizedBox(
                   width: width * 0.85,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(50),
-                      gradient: const LinearGradient(
-                        colors: [Color(0XFF7cd757), Color(0XFF4db050)]
-                      )
-                    ),
-                    width: width * 0.75,
-                    height: height * 0.07,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Icon(Icons.phone, color: Colors.white),
-                          SizedBox(width: width * 0.02),
-                          const Text(
-                            'Phone',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PhoneAuthScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(50),
+                        gradient: const LinearGradient(
+                          colors: [Color(0XFF7cd757), Color(0XFF4db050)]
+                        )
+                      ),
+                      width: width * 0.75,
+                      height: height * 0.07,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Icon(Icons.phone, color: Colors.white),
+                            SizedBox(width: width * 0.02),
+                            const Text(
+                              'Phone',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                          SizedBox(width: width * 0.2)
-                        ],
+                            SizedBox(width: width * 0.2)
+                          ],
+                        ),
                       ),
                     ),
                   ),
