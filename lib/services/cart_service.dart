@@ -182,7 +182,10 @@ class CartService {
 
       if (itemIndex != -1) {
         final item = cartItems[itemIndex];
-        if (newQuantity <= 0) {
+        if (newQuantity < 0) {
+          throw Exception('Quantity cannot be negative');
+        } else if (newQuantity == 0) {
+          // Remove the item if quantity is explicitly set to 0
           cartItems.removeAt(itemIndex);
         } else {
           cartItems[itemIndex] = CartItem(
@@ -205,6 +208,9 @@ class CartService {
           'updatedAt': FieldValue.serverTimestamp(),
         });
         print('Successfully updated quantity for user: $userId, dishId: $dishId'); // Debug log
+      } else {
+        // If item not found, throw an exception
+        throw Exception('Item not found in cart');
       }
     } catch (e) {
       print('Error updating quantity for user $userId: $e'); // Debug log

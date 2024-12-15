@@ -34,7 +34,6 @@ final cartProvider = StateNotifierProvider<CartNotifier, AsyncValue<List<CartIte
 
 final cartServiceProvider = Provider((ref) => CartService());
 
-
 final cartStreamProvider = StreamProvider.family<List<dynamic>, String>((ref, userId) {
   final cartService = ref.read(cartServiceProvider);
   return cartService.getCartStream(userId);
@@ -58,35 +57,34 @@ class CartNotifier extends StateNotifier<AsyncValue<List<CartItem>>> {
 
   CartNotifier(this._cartService, this._userId) : super(const AsyncValue.loading()) {
     print('CartNotifier initialized with userId: $_userId'); // Debug log
-    _initializeCart();
+    // _initializeCart();
   }
 
-  void _initializeCart() {
-    _cartSubscription?.cancel();
-    if (_userId.isEmpty) {
-      print('Empty user ID, setting empty cart'); // Debug log
-      state = const AsyncValue.data([]);
-      return;
-    }
-
-    print('Initializing cart subscription for user: $_userId'); // Debug log
-    _cartSubscription = _cartService.watchCart(_userId).listen(
-          (items) {
-            print('Received ${items.length} items for user: $_userId'); // Debug log
-            if (mounted) {  // Check if notifier is still active
-              state = AsyncValue.data(items);
-            }
-          },
-          onError: (error) {
-            print('Error watching cart for user $_userId: $error'); // Debug log
-            if (mounted) {  // Check if notifier is still active
-              state = AsyncValue.error(error, StackTrace.current);
-            }
-          },
-          cancelOnError: false, // Don't cancel subscription on error
-        );
-  }
-
+  // void _initializeCart() {
+  //   _cartSubscription?.cancel();
+  //   if (_userId.isEmpty) {
+  //     print('Empty user ID, setting empty cart'); // Debug log
+  //     state = const AsyncValue.data([]);
+  //     return;
+  //   }
+  //
+  //   print('Initializing cart subscription for user: $_userId'); // Debug log
+  //   _cartSubscription = _cartService.watchCart(_userId).listen(
+  //         (items) {
+  //           print('Received ${items.length} items for user: $_userId'); // Debug log
+  //           if (mounted) {  // Check if notifier is still active
+  //             state = AsyncValue.data(items);
+  //           }
+  //         },
+  //         onError: (error) {
+  //           print('Error watching cart for user $_userId: $error'); // Debug log
+  //           if (mounted) {  // Check if notifier is still active
+  //             state = AsyncValue.error(error, StackTrace.current);
+  //           }
+  //         },
+  //         cancelOnError: false, // Don't cancel subscription on error
+  //       );
+  // }
 
   @override
   void dispose() {
@@ -95,14 +93,8 @@ class CartNotifier extends StateNotifier<AsyncValue<List<CartItem>>> {
     super.dispose();
   }
 
-
   Future<void> addToCart(CartItem item) async {
-    if (_userId.isEmpty) {
-      print('Cannot add to cart: No user logged in'); // Debug log
-      return;
-    }
 
-    print('Adding to cart for user: $_userId'); // Debug log
     try {
       await _cartService.addToCart(currentUserModel!.id, item);
     } catch (e, stack) {
@@ -112,12 +104,8 @@ class CartNotifier extends StateNotifier<AsyncValue<List<CartItem>>> {
   }
 
   Future<void> updateQuantity(String dishId, int newQuantity) async {
-    if (_userId.isEmpty) {
-      print('Cannot update quantity: No user logged in'); // Debug log
-      return;
-    }
 
-    print('Updating quantity for user: $_userId, dish: $dishId'); // Debug log
+
     try {
       await _cartService.updateQuantity(_userId, dishId, newQuantity);
     } catch (e, stack) {
@@ -127,10 +115,6 @@ class CartNotifier extends StateNotifier<AsyncValue<List<CartItem>>> {
   }
 
   Future<void> clearCart(String userId) async {
-    if (_userId.isEmpty) {
-      print('Cannot update quantity: No user logged in'); // Debug log
-      return;
-    }
 
     try {
       await _cartService.clearCart(currentUserModel!.id);
@@ -139,10 +123,7 @@ class CartNotifier extends StateNotifier<AsyncValue<List<CartItem>>> {
       state = AsyncValue.error(e, stack);
     }
   }
-
-
 }
-
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -154,18 +135,18 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
-@override
+
+  @override
   void initState() {
-
-
-  // TODO: implement initState
     super.initState();
   }
+
   @override
   void dispose() {
     _tabController?.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).currentUser;
@@ -182,75 +163,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         width: width*0.95,
         child: Column(
           children: [
-
             Container(
               height: height*0.3,
               width: width,
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10),bottomRight: Radius.circular(10)),
-                  gradient: LinearGradient(colors: [Color(0xff4cb050),Color(0xff4cb050),Color(0xff7dd857)])
+                  gradient: LinearGradient(colors: [Color(0xff4cb050),Color(0xff4cb050),Color(0xff7dd857)]),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: CircleAvatar(
-                    radius: 35,
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CircleAvatar(
+                      radius: 35,
                       backgroundColor: Colors.orange,
-
                       backgroundImage: currentUserModel!.profilePic ==''||currentUserModel!.profilePic =='null'?
                   NetworkImage('url'):
-                          NetworkImage(currentUserModel!.profilePic)
+                          NetworkImage(currentUserModel!.profilePic),
+                    ),
                   ),
-                ),
-
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
                       currentUserModel?.name ==''?"User":   currentUserModel?.name ?? user?.displayName ?? 'User',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
                       'ID: ${currentUserModel?.id ??  ''}',
                       style: const TextStyle(fontSize: 14),
                     ),
-              ),
+                  ),
                 ],
               ),
             ),
-
-            // UserAccountsDrawerHeader(
-            //
-            //   decoration: BoxDecoration(
-            //     borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10),bottomRight: Radius.circular(10)),
-            // gradient: LinearGradient(colors: [Color(0xff4cb050),Color(0xff4cb050),Color(0xff7dd857)])
-            //   ),
-            //   accountName: Text(
-            //     currentUserModel?.name ==''?"User":   currentUserModel?.name ?? user?.displayName ?? 'User',
-            //     style: const TextStyle(
-            //       fontSize: 18,
-            //       fontWeight: FontWeight.bold,
-            //     ),
-            //   ),
-            //   accountEmail: Text(
-            //     'ID: ${currentUserModel?.id ??  ''}',
-            //     style: const TextStyle(fontSize: 14),
-            //   ),
-            //   currentAccountPicture: CircleAvatar(
-            //     backgroundColor: Colors.orange,
-            //     child: Text(
-            //  currentUserModel!.name == ''?"User":     (currentUserModel?.name ?? user?.displayName ?? 'U')[0].toUpperCase(),
-            //       style: const TextStyle(fontSize: 24, color: Colors.white),
-            //     ),
-            //   ),
-            // ),
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Log out'),
@@ -268,13 +220,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       ),
       appBar: AppBar(shadowColor: Colors.black,
-elevation: 2,
-surfaceTintColor: Colors.white,
-backgroundColor: Colors.white,
+        elevation: 2,
+        surfaceTintColor: Colors.white,
+        backgroundColor: Colors.white,
         actions: [
           Consumer(
             builder: (context, ref, child) {
-
               return Stack(
                 children: [
                   IconButton(
@@ -288,36 +239,33 @@ backgroundColor: Colors.white,
                       );
                     },
                   ),
-cartAsyncValue.when(data: (data){return  Positioned(
-  right: 8,
-  top: 8,
-  child: Container(
-    padding: const EdgeInsets.all(2),
-    decoration: BoxDecoration(
-      color: Colors.red,
-      borderRadius: BorderRadius.circular(10),
-    ),
-    constraints: const BoxConstraints(
-      minWidth: 16,
-      minHeight: 16,
-    ),
-    child: Text(
-      '${data.length}',
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 10,
-      ),
-      textAlign: TextAlign.center,
-    ),
-  ),
-);}, error: (error, stackTrace) => Text('data'), loading: () => SizedBox(),),
-
-
+                  cartAsyncValue.when(data: (data){return  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '${data.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );}, error: (error, stackTrace) => Text('data'), loading: () => SizedBox(),),
                 ],
               );
             },
           ),
-
         ],
         bottom: restaurantData.when(
           data: (data) {
@@ -446,9 +394,9 @@ class MenuCard extends ConsumerWidget {
     final cartItems = ref.watch(cartProvider);
     final cartNotifier = ref.read(cartProvider.notifier);
     // final cartAsyncValue = ref.watch(cartStreamProvider(currentUserModel!.id));
-Map data = {'userId':currentUserModel!.id,'dishId':dishId};
+    Map data = {'userId':currentUserModel!.id,'dishId':dishId};
     final dishAsyncValue = ref.watch(specificDishProvider(jsonEncode(data)));
-print(cartItems);
+    print(cartItems);
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -457,14 +405,14 @@ print(cartItems);
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-checkNonVeg(title)?Padding(
-  padding: const EdgeInsets.all(8.0),
-  child: Image.asset('assets/icons/nonveg.png',height: 015,),
-):Padding(
-  padding: const EdgeInsets.all(8.0),
-  child: Image.asset('assets/icons/veg.png',height: 15),
-),
-           // Icon(CupertinoIcons.dot_square_fill,color: Colors.red,),
+            checkNonVeg(title)?Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset('assets/icons/nonveg.png',height: 015,),
+            ):Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset('assets/icons/veg.png',height: 15,),
+            ),
+            // Icon(CupertinoIcons.dot_square_fill,color: Colors.red,),
             // Info Section
             Expanded(
               child: Padding(
@@ -495,7 +443,6 @@ checkNonVeg(title)?Padding(
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-
                     Row(
                       children: [
                         Padding(
@@ -514,7 +461,6 @@ checkNonVeg(title)?Padding(
                                       final currentItem = cartItems.value?.firstWhere(
                                         (item) => item.dishId == dishId,
                                         orElse: () => CartItem(
-
                                           dishId: dishId.toString(),
                                           name: title,
                                           price: price,
@@ -534,26 +480,9 @@ checkNonVeg(title)?Padding(
                                     },
                                     icon: const Icon(Icons.remove, color:Colors.white),
                                   ),
-
-
                                   dishAsyncValue.when(
                                     data: (cartItems) {
-
-
                                       final  currentQuantity = cartItems==null?0: cartItems!['quantity']==null?0: cartItems!['quantity'];
-                                          // cartItems.firstWhere(
-                                          //       (item) => item.dishId == dishId,
-                                          //   orElse: () => CartItem(
-                                          //     dishId: dishId.toString(),
-                                          //     name: title,
-                                          //     price: price,
-                                          //     currency: currency.name,
-                                          //     calories: calories,
-                                          //     imageUrl: imageUrl,
-                                          //     quantity: 0,
-                                          //
-                                          //   ),
-                                          // ).quantity;
                                       return Text(
                                         '$currentQuantity',
                                         style: const TextStyle(
@@ -574,35 +503,14 @@ checkNonVeg(title)?Padding(
                                           color: Colors.white),
                                     ),
                                   ),
-                                  // Text(
-                                  //   '${cartItems.value?.firstWhere(
-                                  //     (item) => item.dishId == dishId,
-                                  //     orElse: () => CartItem(
-                                  //       dishId: dishId.toString(),
-                                  //       name: title,
-                                  //       price: price.toString(),
-                                  //       currency: currency.name,
-                                  //       calories: calories,
-                                  //       imageUrl: imageUrl,
-                                  //       quantity: 0,
-                                  //     ),
-                                  //   ).quantity ?? 0}',
-                                  //
-                                  //
-                                  //
-                                  //   style: const TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
-                                  // ),
                                   IconButton(
                                     onPressed: () {
-
                                       List<CartAddon> cartAddons= [];
                                       if(addons.isNotEmpty){
                                         for(var docs in addons){
-
-                              cartAddons.add(CartAddon.fromJson(docs.toJson()));
+                                          cartAddons.add(CartAddon.fromJson(docs.toJson()));
                                         }
                                       }
-
                                       final currentItem = cartItems.value?.firstWhere(
                                         (item) => item.dishId == dishId,
                                         orElse: () => CartItem(
@@ -616,10 +524,6 @@ checkNonVeg(title)?Padding(
                                           addons: cartAddons
                                         ),
                                       );
-
-
-                                      print(currentItem!.toJson());
-
                                       cartNotifier.addToCart(
                                         CartItem(
                                           dishId: dishId.toString(),
@@ -628,12 +532,12 @@ checkNonVeg(title)?Padding(
                                           currency: currency.name,
                                           calories: calories,
                                           imageUrl: imageUrl,
-                                          quantity: (currentItem?.quantity ?? 0) + 1,
+                                          quantity: currentItem != null 
+                                            ? (currentItem.quantity + 1) 
+                                            : 1,
                                           addons: cartAddons
-
                                         ),
                                       );
-
                                     },
                                     icon: const Icon(Icons.add, color: Colors.white),
                                   ),
@@ -665,7 +569,6 @@ checkNonVeg(title)?Padding(
               },
             ),
             const SizedBox(width: 10),
-
           ],
         ),
       ),
@@ -687,7 +590,6 @@ checkNonVeg(title)?Padding(
       "ribs",
       "mutton"
     ];
-
     // Check if any non-veg keyword is found in the dish name
     for (var keyword in nonVegKeywords) {
       if (dishName.toLowerCase().contains(keyword)) {
@@ -697,258 +599,3 @@ checkNonVeg(title)?Padding(
     return false;
   }
 }
-
-// class MenuCard extends ConsumerWidget {
-//   final String imageUrl;
-//   final String title;
-//   final String price;
-//   final int calories;
-//   final String description;
-//   final bool isCustomizable;
-//   final Currency currency;
-//   final List<Addon> addons;
-//   final double screenWidth;
-//   final String dishId;
-//
-//   const MenuCard({
-//     super.key,
-//     required this.imageUrl,
-//     required this.title,
-//     required this.price,
-//     required this.calories,
-//     required this.description,
-//     required this.isCustomizable,
-//     required this.currency,
-//     required this.addons,
-//     required this.screenWidth,
-//     required this.dishId,
-//   });
-//
-//   @override
-//   Widget build(BuildContext context, WidgetRef ref) {
-//     final cartAsyncValue = ref.watch(cartStreamProvider(currentUserModel!.id)); // StreamProvider
-//
-//     return Card(
-//       color: Colors.white,
-//       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-//       child: Padding(
-//         padding: const EdgeInsets.all(10.0),
-//         child: Row(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             checkNonVeg(title)
-//                 ? Padding(
-//               padding: const EdgeInsets.all(8.0),
-//               child: Image.asset(
-//                 'assets/icons/nonveg.png',
-//                 height: 15,
-//               ),
-//             )
-//                 : Padding(
-//               padding: const EdgeInsets.all(8.0),
-//               child: Image.asset('assets/icons/veg.png', height: 15),
-//             ),
-//             // Info Section
-//             Expanded(
-//               child: Padding(
-//                 padding: const EdgeInsets.all(8.0),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     Text(
-//                       title,
-//                       style: const TextStyle(
-//                           fontWeight: FontWeight.bold, fontSize: 16),
-//                     ),
-//                     Row(
-//                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                       children: [
-//                         Text(
-//                           '${currency.name} $price -',
-//                           style: const TextStyle(
-//                               fontWeight: FontWeight.bold, fontSize: 14),
-//                         ),
-//                         Text(
-//                           "$calories calories  ",
-//                           style: const TextStyle(
-//                               fontWeight: FontWeight.bold, fontSize: 14),
-//                         ),
-//                       ],
-//                     ),
-//                     Text(
-//                       description,
-//                       style: const TextStyle(color: Color(0xff7a7b7d)),
-//                       maxLines: 2,
-//                       overflow: TextOverflow.ellipsis,
-//                     ),
-//                     Row(
-//                       children: [
-//                         Padding(
-//                           padding: const EdgeInsets.all(8.0),
-//                           child: Container(
-//                             decoration: BoxDecoration(
-//                                 color: Color(0xff4daf50),
-//                                 borderRadius: BorderRadius.circular(30)),
-//                             child: Padding(
-//                               padding: const EdgeInsets.fromLTRB(10.0, 0, 10, 0),
-//                               child: Row(
-//                                 children: [
-//                                   IconButton(
-//                                     onPressed: () {
-//                                       final cartNotifier =
-//                                       ref.read(cartProvider.notifier);
-//
-//                                       cartNotifier.updateQuantity(
-//                                         dishId,
-//                                         _getCurrentItemQuantity(cartAsyncValue) -
-//                                             1,
-//                                       );
-//                                     },
-//                                     icon: const Icon(Icons.remove,
-//                                         color: Colors.white),
-//                                   ),
-//                                   // Use AsyncValue to display the item count
-//                                   cartAsyncValue.when(
-//                                     data: (cartItems) {
-//                                       final currentQuantity =
-//                                           cartItems.firstWhere(
-//                                                 (item) => item.dishId == dishId,
-//                                             orElse: () => CartItem(
-//                                               dishId: dishId.toString(),
-//                                           name: title,
-//                                           price: price,
-//                                           currency: currency.name,
-//                                           calories: calories,
-//                                           imageUrl: imageUrl,
-//                                           quantity: (currentItem?.quantity ?? 0) + 1,
-//
-//                                             ),
-//                                           ).quantity;
-//                                       return Text(
-//                                         '$currentQuantity',
-//                                         style: const TextStyle(
-//                                             fontWeight: FontWeight.bold,
-//                                             color: Colors.white),
-//                                       );
-//                                     },
-//                                     loading: () => const Text(
-//                                       '0',
-//                                       style: TextStyle(
-//                                           fontWeight: FontWeight.bold,
-//                                           color: Colors.white),
-//                                     ),
-//                                     error: (error, _) => const Text(
-//                                       '0',
-//                                       style: TextStyle(
-//                                           fontWeight: FontWeight.bold,
-//                                           color: Colors.white),
-//                                     ),
-//                                   ),
-//                                   IconButton(
-//                                     onPressed: () {
-//                                       final cartNotifier =
-//                                       ref.read(cartProvider.notifier);
-//                                       cartNotifier.addToCart(
-//                                         CartItem(
-//                                           dishId: dishId,
-//                                           name: title,
-//                                           price: price,
-//                                           currency: currency.name,
-//                                           calories: calories,
-//                                           imageUrl: imageUrl,
-//                                           quantity:
-//                                           _getCurrentItemQuantity(
-//                                               cartAsyncValue) +
-//                                               1,
-//                                         ),
-//                                       );
-//                                     },
-//                                     icon: const Icon(Icons.add,
-//                                         color: Colors.white),
-//                                   ),
-//                                 ],
-//                               ),
-//                             ),
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                     isCustomizable
-//                         ? const Text(
-//                       'Customizations Available',
-//                       style: TextStyle(
-//                           color: Color(0xffca5c65),
-//                           fontWeight: FontWeight.w500),
-//                     )
-//                         : const SizedBox()
-//                   ],
-//                 ),
-//               ),
-//             ),
-//             Image.network(
-//               imageUrl,
-//               width: screenWidth * 0.2,
-//               height: screenWidth * 0.2,
-//               fit: BoxFit.cover,
-//               errorBuilder: (context, error, stackTrace) {
-//                 return Container(
-//                   width: screenWidth * 0.2,
-//                   height: screenWidth * 0.2,
-//                   color: Colors.grey[300],
-//                   child: const Icon(Icons.restaurant),
-//                 );
-//               },
-//             ),
-//             const SizedBox(width: 10),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-//
-//   // Helper to check non-veg keywords
-//   bool checkNonVeg(String dishName) {
-//     List<String> nonVegKeywords = [
-//       "chicken",
-//       "lamb",
-//       "beef",
-//       "pork",
-//       "seafood",
-//       "shrimp",
-//       "fish",
-//       "crab",
-//       "steak",
-//       "chowder",
-//       "ribs",
-//       "mutton"
-//     ];
-//     for (var keyword in nonVegKeywords) {
-//       if (dishName.toLowerCase().contains(keyword)) {
-//         return true;
-//       }
-//     }
-//     return false;
-//   }
-//
-//   // Helper to get the current item quantity
-//   int _getCurrentItemQuantity(AsyncValue<List<CartItem>> cartAsyncValue) {
-//     return cartAsyncValue.when(
-//       data: (cartItems) {
-//         final currentItem = cartItems.firstWhere(
-//               (item) => item.dishId == dishId,
-//           orElse: () => CartItem( dishId: dishId.toString(),
-//                                           name: title,
-//                                           price: price,
-//                                           currency: currency.name,
-//                                           calories: calories,
-//                                           imageUrl: imageUrl,
-//                                           quantity: (item?.quantity ?? 0) + 1,
-//                                           addons: cartAddons),
-//         );
-//         return currentItem.quantity;
-//       },
-//       loading: () => 0,
-//       error: (error, stackTrace) => 0,
-//     );
-//   }
-// }
