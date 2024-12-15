@@ -39,80 +39,92 @@ class CartScreen extends ConsumerWidget {
 
           return Column(
             children: [
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Container(
-                    
-
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                blurRadius: 8,
-                          color: Colors.grey,
-                          offset: Offset(1, 2),
-                        )
-                      ]
-                    ),
-                    child: Column(
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  padding: const EdgeInsets.all(16),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return CartItemTile(item: item);
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
-
-                            color: Color(0xff1a3f14),
-                            borderRadius: BorderRadius.only(topRight: Radius.circular(12),topLeft: Radius.circular(12)),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                '${items.length} ${items.length == 1 ? 'Dish' : 'Dishes'} - '
-                                '${items.fold<int>(0, (sum, item) => sum + item.quantity)} '
-                                '${items.fold<int>(0, (sum, item) => sum + item.quantity) == 1 ? 'Item' : 'Items'}',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ],
+                        const Text(
+                          'Total Amount',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: items.length,
-                          padding: const EdgeInsets.all(16),
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-                            return CartItemTile(item: item);
-                          },
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 25.0,right: 25,top: 0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Total Amount',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                'INR ${totalAmount.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ],
+                        Text(
+                          'INR ${totalAmount.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
                           ),
                         ),
-SizedBox(height: 10,)
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () async {
+                        // Show confirmation dialog
+                        await showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Order Confirmation'),
+                              content: const Text('Order successfully placed'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        // Clear the cart
+                        final cartNotifier = ref.read(cartProvider.notifier);
+                      
+                          await cartNotifier.clearCart(ref.read(currentUserIdProvider),);
+                        
+
+                      
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (context) => const HomeScreen()),
+                          (Route<dynamic> route) => false,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Place Order',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -123,40 +135,6 @@ SizedBox(height: 10,)
           child: Text('Error: $error'),
         ),
       ),
-      bottomSheet:
-
-      Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          width: width,
-          child: ElevatedButton(
-
-            onPressed: () {
-              // TODO: Implement place order functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Order placed successfully!'),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor:Color(0xff1a3f14),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'Place Order',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ),
-
     );
   }
 }

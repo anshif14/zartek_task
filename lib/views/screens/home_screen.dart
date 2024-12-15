@@ -103,6 +103,22 @@ class CartNotifier extends StateNotifier<AsyncValue<List<CartItem>>> {
       state = AsyncValue.error(e, stack);
     }
   }
+
+  Future<void> clearCart(String userId) async {
+    if (_userId.isEmpty) {
+      print('Cannot update quantity: No user logged in'); // Debug log
+      return;
+    }
+
+    try {
+      await _cartService.clearCart(_userId);
+    } catch (e, stack) {
+      print('Error updating quantity: $e'); // Debug log
+      state = AsyncValue.error(e, stack);
+    }
+  }
+
+
 }
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -117,11 +133,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   TabController? _tabController;
 @override
   void initState() {
-  if(currentUserModel != null){
-    setState(() {
 
-    });
-  }
 
   // TODO: implement initState
     super.initState();
@@ -131,19 +143,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _tabController?.dispose();
     super.dispose();
   }
-@override
-  void didChangeDependencies() {
-
-  // ref.read(currentUserIdProvider.notifier).state =currentUserModel!.id;
-
-  // TODO: implement didChangeDependencies
-    super.didChangeDependencies();
-  }
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).currentUser;
+    print(user!.uid);
     final restaurantData = ref.watch(restaurantDataProvider);
+
     final cartState = ref.watch(cartProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: Drawer(
