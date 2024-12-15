@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
@@ -95,17 +97,12 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
     });
 
     try {
-      final user = await ref.read(authControllerProvider).verifyOtp(
+    User? user =   await ref.read(authControllerProvider).verifyOtp(
         _verificationId!,
-        otp,
+        otp,context
       );
 
-      if (mounted && user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
+
     } catch (e) {
       setState(() {
         _isLoading = false;

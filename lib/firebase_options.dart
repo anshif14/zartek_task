@@ -55,6 +55,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '366519586548',
     projectId: 'zartek-test-13ea2',
     storageBucket: 'zartek-test-13ea2.firebasestorage.app',
+
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

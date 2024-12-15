@@ -4,7 +4,7 @@ import '../models/restaurantData.dart';
 
 class ApiServices {
   static const String _baseUrl =
-      'https://run.mocky.io/v3/12493478-d447-4e90-90ef-791352988045';
+      'https://run.mocky.io/v3/ad9f84a4-bbba-403f-8a84-aaa3466debba';
 
   Future<RestaurantData> fetchRestaurantData() async {
     try {
@@ -16,8 +16,6 @@ class ApiServices {
         if (jsonList.isNotEmpty) {
           final Map<String, dynamic> jsonData = jsonList;
           print('Processing restaurant data...');
-
-          // Create mock data structure that matches our model
 
 
           return RestaurantData.fromJson(jsonData);

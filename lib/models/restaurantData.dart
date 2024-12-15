@@ -5,6 +5,8 @@
 import 'package:meta/meta.dart';
 import 'dart:convert';
 
+import 'package:zartek_task/models/cart_item.dart';
+
 RestaurantData restaurantDataFromJson(String str) => RestaurantData.fromJson(json.decode(str));
 
 String restaurantDataToJson(RestaurantData data) => json.encode(data.toJson());
@@ -68,7 +70,7 @@ class Category {
 }
 
 class Dish {
-  final int id;
+  final String id;
   final String name;
   final String price;
   final Currency currency;
@@ -91,7 +93,7 @@ class Dish {
   });
 
   Dish copyWith({
-    int? id,
+    String? id,
     String? name,
     String? price,
     Currency? currency,
@@ -114,12 +116,12 @@ class Dish {
       );
 
   factory Dish.fromJson(Map<String, dynamic> json) => Dish(
-    id: json["id"],
-    name: json["name"],
-    price: json["price"],
+    id: json["id"].toString(),
+    name: json["name"].toString(),
+    price: json["price"].toString(),
     currency: currencyValues.map[json["currency"]]!,
     calories: json["calories"],
-    description: json["description"],
+    description: json["description"].toString(),
     addons: List<Addon>.from(json["addons"].map((x) => Addon.fromJson(x))),
     imageUrl: json["image_url"],
     customizationsAvailable: json["customizations_available"],
@@ -139,7 +141,7 @@ class Dish {
 }
 
 class Addon {
-  final int id;
+  final String id;
   final String name;
   final String price;
 
@@ -150,7 +152,7 @@ class Addon {
   });
 
   Addon copyWith({
-    int? id,
+    String? id,
     String? name,
     String? price,
   }) =>
@@ -161,9 +163,9 @@ class Addon {
       );
 
   factory Addon.fromJson(Map<String, dynamic> json) => Addon(
-    id: json["id"],
-    name: json["name"],
-    price: json["price"],
+    id: json["id"].toString(),
+    name: json["name"].toString(),
+    price: json["price"].toString(),
   );
 
   Map<String, dynamic> toJson() => {

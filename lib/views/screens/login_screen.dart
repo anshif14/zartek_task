@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zartek_task/common/local%20variables.dart';
 import '../../common/image_constants.dart';
 import '../../controllers/auth_controller.dart';
 import 'home_screen.dart';
@@ -22,10 +24,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       final user = await ref.read(authControllerProvider).signInWithGoogle();
-      if (mounted && user != null) {
+      if (mounted && user!= null) {
+        print(currentUserModel!.email);
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          CupertinoPageRoute(builder: (context) => const HomeScreen()),
         );
       }
     } catch (e) {
@@ -102,7 +105,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
+                        CupertinoPageRoute(
                           builder: (context) => const PhoneAuthScreen(),
                         ),
                       );

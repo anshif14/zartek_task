@@ -12,7 +12,20 @@
           "package_name": "com.example.zartek_task"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "366519586548-rfaeqb168mujccs2dnnmu1hf8670khnp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.zartek_task",
+            "certificate_hash": "d320aa8e4e44aeb938d0a0d9aafe12a8b8b00d44"
+          }
+        },
+        {
+          "client_id": "366519586548-2unse1rjt49mcnibmn7itag4q7t708ua.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBmFjGpM92vgIBp71O79r4zfj0q38u8UfQ"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "366519586548-2unse1rjt49mcnibmn7itag4q7t708ua.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "366519586548-cb1ukqal7n50rk9m4033bt06h37hh2ut.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.zartekTask"
+              }
+            }
+          ]
         }
       }
     }
