@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -29,6 +30,25 @@ final cartProvider = StateNotifierProvider<CartNotifier, AsyncValue<List<CartIte
 
   // Force recreate CartNotifier when user changes
   return CartNotifier(CartService(), userId);
+});
+
+final cartServiceProvider = Provider((ref) => CartService());
+
+
+final cartStreamProvider = StreamProvider.family<List<dynamic>, String>((ref, userId) {
+  final cartService = ref.read(cartServiceProvider);
+  return cartService.getCartStream(userId);
+});
+// final cartSingleStreamProvider = StreamProvider.family<Map<String,dynamic>?, String>((ref, dishId,) {
+//   final cartService = ref.read(cartServiceProvider);
+//   return cartService.dishStream(dishId);
+// });
+
+// StreamProvider for a specific dish
+final specificDishProvider =
+StreamProvider.family<Map<String, dynamic>?, String>((ref, dishId) {
+  final cartService = ref.read(cartServiceProvider);
+  return cartService.dishStream(dishId);
 });
 
 class CartNotifier extends StateNotifier<AsyncValue<List<CartItem>>> {
@@ -67,12 +87,14 @@ class CartNotifier extends StateNotifier<AsyncValue<List<CartItem>>> {
         );
   }
 
+
   @override
   void dispose() {
     print('Disposing cart notifier for user: $_userId'); // Debug log
     _cartSubscription?.cancel();
     super.dispose();
   }
+
 
   Future<void> addToCart(CartItem item) async {
     if (_userId.isEmpty) {
@@ -82,7 +104,7 @@ class CartNotifier extends StateNotifier<AsyncValue<List<CartItem>>> {
 
     print('Adding to cart for user: $_userId'); // Debug log
     try {
-      await _cartService.addToCart(_userId, item);
+      await _cartService.addToCart(currentUserModel!.id, item);
     } catch (e, stack) {
       print('Error adding to cart: $e'); // Debug log
       state = AsyncValue.error(e, stack);
@@ -111,7 +133,7 @@ class CartNotifier extends StateNotifier<AsyncValue<List<CartItem>>> {
     }
 
     try {
-      await _cartService.clearCart(_userId);
+      await _cartService.clearCart(currentUserModel!.id);
     } catch (e, stack) {
       print('Error updating quantity: $e'); // Debug log
       state = AsyncValue.error(e, stack);
@@ -120,6 +142,7 @@ class CartNotifier extends StateNotifier<AsyncValue<List<CartItem>>> {
 
 
 }
+
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -149,7 +172,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     print(user!.uid);
     final restaurantData = ref.watch(restaurantDataProvider);
 
+    final cartAsyncValue = ref.watch(cartStreamProvider(currentUserModel!.id));
     final cartState = ref.watch(cartProvider);
+    // ref.read(cartProvider.notifier);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -263,30 +288,31 @@ backgroundColor: Colors.white,
                       );
                     },
                   ),
-                  if (cartState.hasValue && cartState.value!.isNotEmpty)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          '${cartState.value!.length}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
+cartAsyncValue.when(data: (data){return  Positioned(
+  right: 8,
+  top: 8,
+  child: Container(
+    padding: const EdgeInsets.all(2),
+    decoration: BoxDecoration(
+      color: Colors.red,
+      borderRadius: BorderRadius.circular(10),
+    ),
+    constraints: const BoxConstraints(
+      minWidth: 16,
+      minHeight: 16,
+    ),
+    child: Text(
+      '${data.length}',
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 10,
+      ),
+      textAlign: TextAlign.center,
+    ),
+  ),
+);}, error: (error, stackTrace) => Text('data'), loading: () => SizedBox(),),
+
+
                 ],
               );
             },
@@ -419,6 +445,9 @@ class MenuCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cartItems = ref.watch(cartProvider);
     final cartNotifier = ref.read(cartProvider.notifier);
+    // final cartAsyncValue = ref.watch(cartStreamProvider(currentUserModel!.id));
+Map data = {'userId':currentUserModel!.id,'dishId':dishId};
+    final dishAsyncValue = ref.watch(specificDishProvider(jsonEncode(data)));
 print(cartItems);
     return Card(
       color: Colors.white,
@@ -466,30 +495,7 @@ checkNonVeg(title)?Padding(
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    // if (isCustomizable) ...[
-                    //   const Padding(
-                    //     padding: EdgeInsets.only(top: 5),
-                    //     child: Text(
-                    //       'Customizations Available',
-                    //       style: TextStyle(color: Colors.red, fontSize: 12),
-                    //     ),
-                    //   ),
-                    //   if (addons.isNotEmpty)
-                    //     Padding(
-                    //       padding: const EdgeInsets.only(top: 5),
-                    //       child: Wrap(
-                    //         spacing: 8,
-                    //         children: addons.map((addon) => Chip(
-                    //           label: Text(
-                    //             '${addon.name} (+${addon.price})',
-                    //             style: const TextStyle(fontSize: 12),
-                    //           ),
-                    //         )).toList(),
-                    //       ),
-                    //     ),
-                    // ],
-                    // const SizedBox(height: 10),
-                    // Add Quantity Section
+
                     Row(
                       children: [
                         Padding(
@@ -528,24 +534,64 @@ checkNonVeg(title)?Padding(
                                     },
                                     icon: const Icon(Icons.remove, color:Colors.white),
                                   ),
-                                  Text(
-                                    '${cartItems.value?.firstWhere(
-                                      (item) => item.dishId == dishId,
-                                      orElse: () => CartItem(
-                                        dishId: dishId.toString(),
-                                        name: title,
-                                        price: price.toString(),
-                                        currency: currency.name,
-                                        calories: calories,
-                                        imageUrl: imageUrl,
-                                        quantity: 0,
-                                      ),
-                                    ).quantity ?? 0}',
 
 
+                                  dishAsyncValue.when(
+                                    data: (cartItems) {
 
-                                    style: const TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
+
+                                      final  currentQuantity = cartItems==null?0: cartItems!['quantity']==null?0: cartItems!['quantity'];
+                                          // cartItems.firstWhere(
+                                          //       (item) => item.dishId == dishId,
+                                          //   orElse: () => CartItem(
+                                          //     dishId: dishId.toString(),
+                                          //     name: title,
+                                          //     price: price,
+                                          //     currency: currency.name,
+                                          //     calories: calories,
+                                          //     imageUrl: imageUrl,
+                                          //     quantity: 0,
+                                          //
+                                          //   ),
+                                          // ).quantity;
+                                      return Text(
+                                        '$currentQuantity',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white),
+                                      );
+                                    },
+                                    loading: () => const Text(
+                                      '0',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white),
+                                    ),
+                                    error: (error, _) => const Text(
+                                      '0',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white),
+                                    ),
                                   ),
+                                  // Text(
+                                  //   '${cartItems.value?.firstWhere(
+                                  //     (item) => item.dishId == dishId,
+                                  //     orElse: () => CartItem(
+                                  //       dishId: dishId.toString(),
+                                  //       name: title,
+                                  //       price: price.toString(),
+                                  //       currency: currency.name,
+                                  //       calories: calories,
+                                  //       imageUrl: imageUrl,
+                                  //       quantity: 0,
+                                  //     ),
+                                  //   ).quantity ?? 0}',
+                                  //
+                                  //
+                                  //
+                                  //   style: const TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
+                                  // ),
                                   IconButton(
                                     onPressed: () {
 
@@ -651,3 +697,258 @@ checkNonVeg(title)?Padding(
     return false;
   }
 }
+
+// class MenuCard extends ConsumerWidget {
+//   final String imageUrl;
+//   final String title;
+//   final String price;
+//   final int calories;
+//   final String description;
+//   final bool isCustomizable;
+//   final Currency currency;
+//   final List<Addon> addons;
+//   final double screenWidth;
+//   final String dishId;
+//
+//   const MenuCard({
+//     super.key,
+//     required this.imageUrl,
+//     required this.title,
+//     required this.price,
+//     required this.calories,
+//     required this.description,
+//     required this.isCustomizable,
+//     required this.currency,
+//     required this.addons,
+//     required this.screenWidth,
+//     required this.dishId,
+//   });
+//
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final cartAsyncValue = ref.watch(cartStreamProvider(currentUserModel!.id)); // StreamProvider
+//
+//     return Card(
+//       color: Colors.white,
+//       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+//       child: Padding(
+//         padding: const EdgeInsets.all(10.0),
+//         child: Row(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             checkNonVeg(title)
+//                 ? Padding(
+//               padding: const EdgeInsets.all(8.0),
+//               child: Image.asset(
+//                 'assets/icons/nonveg.png',
+//                 height: 15,
+//               ),
+//             )
+//                 : Padding(
+//               padding: const EdgeInsets.all(8.0),
+//               child: Image.asset('assets/icons/veg.png', height: 15),
+//             ),
+//             // Info Section
+//             Expanded(
+//               child: Padding(
+//                 padding: const EdgeInsets.all(8.0),
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text(
+//                       title,
+//                       style: const TextStyle(
+//                           fontWeight: FontWeight.bold, fontSize: 16),
+//                     ),
+//                     Row(
+//                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                       children: [
+//                         Text(
+//                           '${currency.name} $price -',
+//                           style: const TextStyle(
+//                               fontWeight: FontWeight.bold, fontSize: 14),
+//                         ),
+//                         Text(
+//                           "$calories calories  ",
+//                           style: const TextStyle(
+//                               fontWeight: FontWeight.bold, fontSize: 14),
+//                         ),
+//                       ],
+//                     ),
+//                     Text(
+//                       description,
+//                       style: const TextStyle(color: Color(0xff7a7b7d)),
+//                       maxLines: 2,
+//                       overflow: TextOverflow.ellipsis,
+//                     ),
+//                     Row(
+//                       children: [
+//                         Padding(
+//                           padding: const EdgeInsets.all(8.0),
+//                           child: Container(
+//                             decoration: BoxDecoration(
+//                                 color: Color(0xff4daf50),
+//                                 borderRadius: BorderRadius.circular(30)),
+//                             child: Padding(
+//                               padding: const EdgeInsets.fromLTRB(10.0, 0, 10, 0),
+//                               child: Row(
+//                                 children: [
+//                                   IconButton(
+//                                     onPressed: () {
+//                                       final cartNotifier =
+//                                       ref.read(cartProvider.notifier);
+//
+//                                       cartNotifier.updateQuantity(
+//                                         dishId,
+//                                         _getCurrentItemQuantity(cartAsyncValue) -
+//                                             1,
+//                                       );
+//                                     },
+//                                     icon: const Icon(Icons.remove,
+//                                         color: Colors.white),
+//                                   ),
+//                                   // Use AsyncValue to display the item count
+//                                   cartAsyncValue.when(
+//                                     data: (cartItems) {
+//                                       final currentQuantity =
+//                                           cartItems.firstWhere(
+//                                                 (item) => item.dishId == dishId,
+//                                             orElse: () => CartItem(
+//                                               dishId: dishId.toString(),
+//                                           name: title,
+//                                           price: price,
+//                                           currency: currency.name,
+//                                           calories: calories,
+//                                           imageUrl: imageUrl,
+//                                           quantity: (currentItem?.quantity ?? 0) + 1,
+//
+//                                             ),
+//                                           ).quantity;
+//                                       return Text(
+//                                         '$currentQuantity',
+//                                         style: const TextStyle(
+//                                             fontWeight: FontWeight.bold,
+//                                             color: Colors.white),
+//                                       );
+//                                     },
+//                                     loading: () => const Text(
+//                                       '0',
+//                                       style: TextStyle(
+//                                           fontWeight: FontWeight.bold,
+//                                           color: Colors.white),
+//                                     ),
+//                                     error: (error, _) => const Text(
+//                                       '0',
+//                                       style: TextStyle(
+//                                           fontWeight: FontWeight.bold,
+//                                           color: Colors.white),
+//                                     ),
+//                                   ),
+//                                   IconButton(
+//                                     onPressed: () {
+//                                       final cartNotifier =
+//                                       ref.read(cartProvider.notifier);
+//                                       cartNotifier.addToCart(
+//                                         CartItem(
+//                                           dishId: dishId,
+//                                           name: title,
+//                                           price: price,
+//                                           currency: currency.name,
+//                                           calories: calories,
+//                                           imageUrl: imageUrl,
+//                                           quantity:
+//                                           _getCurrentItemQuantity(
+//                                               cartAsyncValue) +
+//                                               1,
+//                                         ),
+//                                       );
+//                                     },
+//                                     icon: const Icon(Icons.add,
+//                                         color: Colors.white),
+//                                   ),
+//                                 ],
+//                               ),
+//                             ),
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                     isCustomizable
+//                         ? const Text(
+//                       'Customizations Available',
+//                       style: TextStyle(
+//                           color: Color(0xffca5c65),
+//                           fontWeight: FontWeight.w500),
+//                     )
+//                         : const SizedBox()
+//                   ],
+//                 ),
+//               ),
+//             ),
+//             Image.network(
+//               imageUrl,
+//               width: screenWidth * 0.2,
+//               height: screenWidth * 0.2,
+//               fit: BoxFit.cover,
+//               errorBuilder: (context, error, stackTrace) {
+//                 return Container(
+//                   width: screenWidth * 0.2,
+//                   height: screenWidth * 0.2,
+//                   color: Colors.grey[300],
+//                   child: const Icon(Icons.restaurant),
+//                 );
+//               },
+//             ),
+//             const SizedBox(width: 10),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+//
+//   // Helper to check non-veg keywords
+//   bool checkNonVeg(String dishName) {
+//     List<String> nonVegKeywords = [
+//       "chicken",
+//       "lamb",
+//       "beef",
+//       "pork",
+//       "seafood",
+//       "shrimp",
+//       "fish",
+//       "crab",
+//       "steak",
+//       "chowder",
+//       "ribs",
+//       "mutton"
+//     ];
+//     for (var keyword in nonVegKeywords) {
+//       if (dishName.toLowerCase().contains(keyword)) {
+//         return true;
+//       }
+//     }
+//     return false;
+//   }
+//
+//   // Helper to get the current item quantity
+//   int _getCurrentItemQuantity(AsyncValue<List<CartItem>> cartAsyncValue) {
+//     return cartAsyncValue.when(
+//       data: (cartItems) {
+//         final currentItem = cartItems.firstWhere(
+//               (item) => item.dishId == dishId,
+//           orElse: () => CartItem( dishId: dishId.toString(),
+//                                           name: title,
+//                                           price: price,
+//                                           currency: currency.name,
+//                                           calories: calories,
+//                                           imageUrl: imageUrl,
+//                                           quantity: (item?.quantity ?? 0) + 1,
+//                                           addons: cartAddons),
+//         );
+//         return currentItem.quantity;
+//       },
+//       loading: () => 0,
+//       error: (error, stackTrace) => 0,
+//     );
+//   }
+// }

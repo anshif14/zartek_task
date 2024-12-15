@@ -21,9 +21,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
 
   Future<void> _handleGoogleSignIn() async {
+
     setState(() { _isLoading = true;});
     try {
       final user = await ref.read(authControllerProvider).signInWithGoogle();
+      ref.read(cartProvider);
       if (mounted && user!= null) {
         print(user!.uid);
         print(currentUserModel!.email);

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:zartek_task/common/local%20variables.dart';
 import '../models/cart_item.dart';
@@ -60,7 +62,33 @@ class CartService {
       }
     });
   }
+  Stream<List<dynamic>> getCartStream(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .map((snapshot) {
+      final data = snapshot.data();
+      return data?['cart'] as List<dynamic>? ?? []; // Return the cart array
+    });
+  }
 
+  // Stream for a specific dish in cart
+  Stream<Map<String, dynamic>?> dishStream(String dishId) {
+    Map data = jsonDecode(dishId);
+    return _firestore.collection('users').doc(data['userId']).snapshots().map((snapshot) {
+
+      // for (var doc in snapshot.data()!['cart']) {
+        final cartItems = List<Map<String, dynamic>>.from(snapshot['cart']);
+        for (var item in cartItems) {
+          if (item['dishId'] == data['dishId']) {
+            return item; // Return the matching dish
+          }
+        // }
+      }
+      return null; // If no match found
+    });
+  }
   Future<void> addToCart(String userId, CartItem item) async {
     print('Adding item to cart for user: $userId'); // Debug log
     if (userId.isEmpty) {
@@ -135,7 +163,7 @@ class CartService {
     }
 
     try {
-      final userRef = _firestore.collection('users').doc(userId);
+      final userRef = _firestore.collection('users').doc(currentUserModel!.id);
       final userDoc = await userRef.get();
 
       if (!userDoc.exists) {

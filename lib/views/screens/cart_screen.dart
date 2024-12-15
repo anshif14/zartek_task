@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zartek_task/common/local%20variables.dart';
 import 'package:zartek_task/views/screens/login_screen.dart';
 import '../../models/cart_item.dart';
 import 'home_screen.dart';
@@ -10,7 +11,7 @@ class CartScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cartItems = ref.watch(cartProvider);
+    final cartItems = ref.watch(cartStreamProvider(currentUserModel!.id));
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -34,7 +35,7 @@ class CartScreen extends ConsumerWidget {
 
           final totalAmount = items.fold<double>(
             0,
-            (sum, item) => sum + (double.parse(item.price) * item.quantity),
+            (sum, item) => sum + (double.tryParse(item['price'])??0 * item.quantity),
           );
 
           return Column(
@@ -45,7 +46,7 @@ class CartScreen extends ConsumerWidget {
                   itemCount: items.length,
                   padding: const EdgeInsets.all(16),
                   itemBuilder: (context, index) {
-                    final item = items[index];
+                    final item = CartItem.fromJson(items[index]);
                     return CartItemTile(item: item);
                   },
                 ),
